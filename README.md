@@ -17,6 +17,7 @@ It provides market overview, coin-level analysis, technical indicators, and comp
 - Volatility & risk metrics (std dev, drawdown)
 
 ![Market Overview Light](./screenshots/market-light.png)
+
 ![Market Overview Dark](./screenshots/market-dark.png)
 
 ---
