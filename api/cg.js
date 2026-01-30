@@ -1,14 +1,6 @@
-// api/cg.js
-// Vercel Serverless Function: CoinGecko proxy with:
-// - allowlist of paths (security)
-// - in-memory cache (helps a ton in vercel dev / local)
-// - stale fallback on 429/5xx (it keeps the app usable)
-// - CDN cache header for production
-
-const CACHE = new Map(); // key -> { t, bodyText, contentType }
-const TTL_MS = 60_000; // fresh for 60s
-const STALE_MS = 10 * 60_000; // serve stale up to 10 min on 429/5xx
-
+const CACHE = new Map(); 
+const TTL_MS = 60_000; 
+const STALE_MS = 10 * 60_000; 
 function buildUpstreamUrl(path, qs) {
   const url = new URL("https://api.coingecko.com/api/v3" + path);
   for (const [k, v] of Object.entries(qs || {})) {
