@@ -7,7 +7,7 @@ It provides market overview, coin-level analysis, technical indicators, and comp
 
 ## 🚀 Live Demo
 
-👉 https://crypto-dash-qxk5gpswx-mehrabgholamsamanis-projects.vercel.app
+👉 [https://crypto-dash-qxk5gpswx-mehrabgholamsamanis-projects.vercel.app](https://crypto-dash-ten-eta.vercel.app/)
 
 
 ## ✨ Features
