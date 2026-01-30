@@ -5,7 +5,10 @@
 CryptoDash is a modern, responsive cryptocurrency dashboard built with **React** and **Chart.js**.  
 It provides market overview, coin-level analysis, technical indicators, and comparison tools, designed with realistic limitations such as API rate limits, caching, and UI stability in mind.
 
----
+## 🚀 Live Demo
+
+👉 https://crypto-dash-qxk5gpswx-mehrabgholamsamanis-projects.vercel.app
+
 
 ## ✨ Features
 
