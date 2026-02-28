@@ -109,3 +109,5 @@ It provides market overview, coin-level analysis, technical indicators, and comp
 ```bash
 npm install
 npm run dev
+
+[![Website](https://img.shields.io/badge/Website-000000?logo=googlechrome&logoColor=white)](https://mehrabdev.com)
