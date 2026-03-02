@@ -168,7 +168,15 @@ export async function fetchWithCache(inputUrl, ttlOrOpts = 10 * 60 * 1000, maybe
 
         const status = e?.status;
 
-        if (status === 404 && fallbackUrl && fallbackUrl !== primaryUrl) {
+        // If the proxy isn't available in dev (Vite), it may return HTML/JS instead of JSON.
+        // In that case (status is null or JSON parse fails), fall back to direct CoinGecko.
+        const shouldFallbackToDirect =
+          (status === 404) ||
+          (status == null) ||
+          (e instanceof SyntaxError) ||
+          (typeof e?.message === "string" && e.message.toLowerCase().includes("json"));
+
+        if (shouldFallbackToDirect && fallbackUrl && fallbackUrl !== primaryUrl) {
           try {
             const json = await fetchJson(fallbackUrl, { signal });
             const payload = { t: Date.now(), v: json, url: primaryUrl, direct: fallbackUrl };

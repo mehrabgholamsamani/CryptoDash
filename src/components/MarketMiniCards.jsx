@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 
-export default function MarketMiniCards({ coins, loading }) {
+export default function MarketMiniCards({ coins, loading, onSelectCoin, watchlistApi, range }) {
   const scrollerRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const dragState = useRef({ startX: 0, startScrollLeft: 0 });
@@ -62,7 +62,7 @@ export default function MarketMiniCards({ coins, loading }) {
         const isPos = typeof ch === "number" && ch >= 0;
 
         return (
-          <div key={c.id} className="card coinCard coinCardFixed">
+          <div key={c.id} className="card coinCard coinCardFixed" onClick={() => onSelectCoin?.(c.id)} style={{ cursor: "pointer" }}>
             <div className="coinLogo">
               <img src={c.image} alt={`${c.name} logo`} />
             </div>

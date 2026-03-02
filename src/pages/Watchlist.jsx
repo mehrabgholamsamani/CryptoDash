@@ -95,7 +95,7 @@ export default function Watchlist({ watchlistApi, onSelectCoin }) {
       // ✅ Force bypass: add a cache-buster if requested
       if (force) url.searchParams.set("_t", String(Date.now()));
 
-      const json = await fetchJson(url.toString(), { signal: ac.signal });
+      const json = await fetchWithCache(url.toString(), 5 * 60 * 1000, { signal: ac.signal });
 
       // preserve order of ids (optional)
       const byId = new Map((Array.isArray(json) ? json : []).map((x) => [x.id, x]));
@@ -129,7 +129,7 @@ export default function Watchlist({ watchlistApi, onSelectCoin }) {
             retryUrl.searchParams.set("price_change_percentage", "24h");
             retryUrl.searchParams.set("_t", String(Date.now()));
 
-            const json2 = await fetchJson(retryUrl.toString(), { signal: ac.signal });
+            const json2 = await fetchWithCache(retryUrl.toString(), 5 * 60 * 1000, { signal: ac.signal });
             const byId2 = new Map((Array.isArray(json2) ? json2 : []).map((x) => [x.id, x]));
             const ordered2 = ids.map((id) => byId2.get(id)).filter(Boolean);
 

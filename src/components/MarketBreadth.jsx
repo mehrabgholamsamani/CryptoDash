@@ -1,10 +1,10 @@
-export default function MarketBreadth({ loading, range, breadth }) {
+export default function MarketBreadth({ loading, range, breadth, variant = "card" }) {
   if (loading) return <div className="skeleton skel-chart" style={{ height: 170 }} />;
 
   const { upPct, downPct, upCount, downCount, total } = breadth;
 
   return (
-    <div className="card">
+    <div className={variant === "embedded" ? "mPanel" : "card"}>
       <div className="chartTitleRow">
         <div className="metricTitle">Market Breadth</div>
         <div className="metricSub">{range} • Advancers vs Decliners</div>

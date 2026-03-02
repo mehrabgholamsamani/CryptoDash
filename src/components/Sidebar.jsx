@@ -1,8 +1,16 @@
 import { useState } from "react";
 import logo from "../assets/logo.png";
 
-export default function Sidebar({ active, setActive, coin, setCoin }) {
-  const [open, setOpen] = useState(true);
+const MOBILE_NAV = [
+  { id: "market",    icon: "📊", label: "Market"  },
+  { id: "coin",      icon: "🪙", label: "Coins"   },
+  { id: "watchlist", icon: "⭐", label: "Watch"   },
+  { id: "compare",   icon: "⚖️", label: "Compare" },
+  { id: "settings",  icon: "⚙️", label: "Settings"},
+];
+
+export default function Sidebar({ mobileOpen, setMobileOpen, active, setActive, coin, setCoin }) {
+  const [coinOpen, setCoinOpen] = useState(true);
 
   const topCoins = [
     { id: "bitcoin", label: "Bitcoin" },
@@ -14,9 +22,40 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
   ];
 
   return (
-    <aside className="sidebar">
+    <>
+      {/* ── Mobile top navbar (only visible on small screens via CSS) ── */}
+      <nav className="mobileTopNav" aria-label="Mobile navigation">
+        <div className="mobileTopNavBrand">
+          <img src={logo} alt="CryptoDash" className="mobileTopNavLogo" />
+        </div>
+
+        <div className="mobileTopNavItems">
+          {MOBILE_NAV.map(({ id, icon, label }) => (
+            <button
+              key={id}
+              type="button"
+              className={`mobileTopNavItem ${active === id ? "active" : ""}`}
+              onClick={() => {
+                if (id === "coin") {
+                  setCoin(coin); // navigate to currently selected coin
+                } else {
+                  setActive(id);
+                }
+              }}
+            >
+              <span className="mobileTopNavIcon">{icon}</span>
+              <span className="mobileTopNavLabel">{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* ── Overlay + desktop sidebar (hidden on mobile via CSS) ── */}
+      <div className={`sidebarOverlay ${mobileOpen ? "show" : ""}`} onClick={() => setMobileOpen(false)} />
+      <aside className={`sidebar ${mobileOpen ? "open" : ""}`}>
       {/* BRAND */}
       <div className="brand">
+        <button className="sidebarClose" type="button" aria-label="Close menu" title="Close" onClick={() => setMobileOpen(false)}>✕</button>
         <img src={logo} alt="CryptoDash logo" className="brandLogo" />
         <div>
           <div className="brandName">CryptoDash</div>
@@ -28,7 +67,10 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
       <nav className="nav">
         <button
           className={`navItem ${active === "market" ? "active" : ""}`}
-          onClick={() => setActive("market")}
+          onClick={() => {
+            setActive("market");
+            setMobileOpen(false);
+          }}
         >
           <span className="navIcon">📊</span>
           Market Overview
@@ -38,16 +80,16 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
         <div className="dropdownWrap">
           <button
             className="dropdownHeader"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => setCoinOpen((v) => !v)}
           >
             <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <span className="navIcon">🪙</span>
               Coin Details
             </span>
-            <span className="muted">{open ? "▾" : "▸"}</span>
+            <span className="muted">{coinOpen ? "▾" : "▸"}</span>
           </button>
 
-          {open && (
+          {coinOpen && (
             <div className="dropdownList">
               {topCoins.map((c) => (
                 <button
@@ -58,6 +100,7 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
                   onClick={() => {
                     setCoin(c.id);
                     setActive("coin");
+                    setMobileOpen(false);
                   }}
                 >
                   {c.label}
@@ -69,7 +112,10 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
 
         <button
           className={`navItem ${active === "watchlist" ? "active" : ""}`}
-          onClick={() => setActive("watchlist")}
+          onClick={() => {
+            setActive("watchlist");
+            setMobileOpen(false);
+          }}
         >
           <span className="navIcon">⭐</span>
           Watchlist
@@ -77,7 +123,10 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
 
         <button
           className={`navItem ${active === "compare" ? "active" : ""}`}
-          onClick={() => setActive("compare")}
+          onClick={() => {
+            setActive("compare");
+            setMobileOpen(false);
+          }}
         >
           <span className="navIcon">⚖️</span>
           Compare
@@ -85,7 +134,10 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
 
         <button
           className={`navItem ${active === "settings" ? "active" : ""}`}
-          onClick={() => setActive("settings")}
+          onClick={() => {
+            setActive("settings");
+            setMobileOpen(false);
+          }}
         >
           <span className="navIcon">⚙️</span>
           Settings
@@ -102,5 +154,6 @@ export default function Sidebar({ active, setActive, coin, setCoin }) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

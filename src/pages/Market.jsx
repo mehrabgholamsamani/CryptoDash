@@ -42,6 +42,25 @@ export default function Market({ onSelectCoin, range, watchlistApi }) {
   const [coins, setCoins] = useState([]);
   const [loadingCoins, setLoadingCoins] = useState(true);
 
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 820px)");
+    const apply = () => setIsMobile(!!mq.matches);
+    apply();
+
+    // Safari < 14 uses addListener/removeListener
+    if (mq.addEventListener) {
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+    }
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
+  }, []);
+
   // Instead of history market_chart calls, we use sparkline from markets:
   // { coinId: [price, price, ...] }
   const [sparkSeries, setSparkSeries] = useState({});
@@ -190,36 +209,19 @@ export default function Market({ onSelectCoin, range, watchlistApi }) {
     const upPct = considered ? (upCount / considered) * 100 : 0;
     const downPct = considered ? (downCount / considered) * 100 : 0;
 
-    return { upPct, downPct, upCount, downCount, total: considered };
+    return { upPct, downPct, upCount, downCount, total };
   }, [breadthUniverse, range]);
 
   const volatilityRows = useMemo(() => {
-    const rows = TOP_COINS.map((id) => {
-      const prices = sparkSeries[id] || [];
-      const volPct = computeVolatilityFromSeries(prices);
-      const meta = coins.find((c) => c.id === id);
-
-      return { id, name: meta?.name || id, volPct: Number.isFinite(volPct) ? volPct : 0 };
-    });
-
-    return rows.sort((a, b) => b.volPct - a.volPct);
+    return TOP_COINS.map((id) => {
+      const series = sparkSeries[id] || [];
+      const c = coins.find((x) => x.id === id);
+      return { id, name: c?.name || id, volPct: computeVolatilityFromSeries(series) };
+    }).filter((r) => r.volPct > 0);
   }, [sparkSeries, coins]);
 
-  //  Only show "total error" if the whole page is dead.
-  if (error && !coins.length) {
-    return (
-      <div className="emptyState">
-        <b>Couldn’t load Market Overview</b>
-        <div className="muted" style={{ marginTop: 6 }}>{error}</div>
-        <div className="muted small" style={{ marginTop: 10 }}>
-          CoinGecko can rate-limit sometimes. With the proxy, cached data should appear soon.
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid">
+    <div className={isMobile ? "grid marketMobile" : "grid"}>
       {warning ? (
         <div className="emptyState" style={{ marginBottom: 12 }}>
           <b>Some data is limited</b>
@@ -227,92 +229,185 @@ export default function Market({ onSelectCoin, range, watchlistApi }) {
         </div>
       ) : null}
 
-      {/* Top mini cards */}
-      <MarketMiniCards
-        coins={coins}
-        loading={loadingCoins}
-        onSelectCoin={onSelectCoin}
-        watchlistApi={watchlistApi}
-        range={range}
-      />
+      {isMobile ? (
+        <>
+          {/* Mobile: clean + compact (Coinbase-ish) */}
+          <div className="card mSection">
+            <div className="mSectionHeader">
+              <div>
+                <div className="mSectionTitle">Top Coins</div>
+                <div className="mSectionSub">Tap a coin to view details</div>
+              </div>
+            </div>
 
-      {/* Charts row */}
-      <div className="marketChartsRow">
-        <div className="card" style={{ minHeight: 360 }}>
-          <div className="chartTitleRow">
-            <div className="chartTitle">Market Overview</div>
-            <div className="chartHint">
-              Multi-coin trend (uses 7d sparkline for stability)
+            <div className="mCoinGrid">
+              {coins.map((c) => {
+                const ch = c.price_change_percentage_24h;
+                const isPos = typeof ch === "number" && ch >= 0;
+
+                return (
+                  <button
+                    key={c.id}
+                    className="mCoinCard"
+                    onClick={() => onSelectCoin?.(c.id)}
+                    type="button"
+                  >
+                    <div className="mCoinLeft">
+                      {c.image ? (
+                        <img className="mCoinIcon" src={c.image} alt={c.name} loading="lazy" />
+                      ) : (
+                        <div className="mCoinIconFallback">
+                          {String(c.symbol || "?").slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="mCoinMeta">
+                        <div className="mCoinName">{c.name}</div>
+                        <div className="mCoinSym">{String(c.symbol || "").toUpperCase()}</div>
+                      </div>
+                    </div>
+
+                    <div className="mCoinRight">
+                      <div className="mCoinPrice">${Number(c.current_price).toLocaleString()}</div>
+                      <div className={"mCoinChange " + (isPos ? "pos" : "neg")}>
+                        {typeof ch === "number" ? (isPos ? "+" : "") + ch.toFixed(2) : "—"}%
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div style={{ height: 300 }}>
-            <MultiCoinLineChart
-              labels={chartModel.labels}
-              seriesByCoin={chartModel.seriesByCoin}
-              loading={loadingCoins}
-            />
+          <div className="card mChartCard">
+            <div className="mCardTitle">Market Overview</div>
+            <div className="mChartWrap">
+              <MultiCoinLineChart
+                labels={chartModel.labels}
+                seriesByCoin={chartModel.seriesByCoin}
+                loading={loadingCoins}
+              />
+            </div>
+            <div className="muted small" style={{ marginTop: 8 }}>
+              Trend lines use CoinGecko’s 7d sparkline for reliability.
+            </div>
           </div>
-        </div>
 
-        <div className="card" style={{ minHeight: 360 }}>
-          <div className="chartTitleRow">
-            <div className="chartTitle">Volume</div>
-            <div className="chartHint">24h liquidity</div>
+          <div className="card mChartCard">
+            <div className="mCardTitle">Volume</div>
+            <div className="mChartWrap">
+              <VolumeBarChart coins={coins} loading={loadingCoins} />
+            </div>
           </div>
 
-          <div style={{ height: 300 }}>
-            <VolumeBarChart coins={coins} loading={loadingCoins} />
+          <div className="mAccordion">
+            <details className="mDetails">
+              <summary className="mSummary">
+                <span>Market Breadth</span>
+                <span className="mChevron">▾</span>
+              </summary>
+              <div className="mDetailsBody">
+                <MarketBreadth loading={loadingBreadth} range={range} breadth={breadth} variant="embedded" />
+              </div>
+            </details>
+
+            <details className="mDetails">
+              <summary className="mSummary">
+                <span>Volatility & Risk</span>
+                <span className="mChevron">▾</span>
+              </summary>
+              <div className="mDetailsBody">
+                <VolatilitySnapshot loading={loadingCoins} range={range} rows={volatilityRows} variant="embedded" />
+              </div>
+            </details>
           </div>
-        </div>
-      </div>
+        </>
+      ) : (
+        <>
+          {/* Desktop: original layout */}
+          <MarketMiniCards
+            coins={coins}
+            loading={loadingCoins}
+            onSelectCoin={onSelectCoin}
+            watchlistApi={watchlistApi}
+            range={range}
+          />
 
-      {/* Analytics row */}
-      <div className="analyticsRow">
-        <MarketBreadth loading={loadingBreadth} range={range} breadth={breadth} />
-        <VolatilitySnapshot loading={loadingCoins} range={range} rows={volatilityRows} />
-      </div>
+          <div className="marketChartsRow">
+            <div className="card" style={{ minHeight: 360 }}>
+              <div className="chartTitleRow">
+                <div className="chartTitle">Market Overview</div>
+                <div className="chartHint">
+                  Multi-coin trend (uses 7d sparkline for stability)
+                </div>
+              </div>
 
-      {/* Table */}
-      <div className="card">
-        <div className="chartTitleRow">
-          <div className="chartTitle">Top Coins</div>
-          <div className="chartHint">Click a row for details</div>
-        </div>
+              <div style={{ height: 300 }}>
+                <MultiCoinLineChart
+                  labels={chartModel.labels}
+                  seriesByCoin={chartModel.seriesByCoin}
+                  loading={loadingCoins}
+                />
+              </div>
+            </div>
 
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Coin</th>
-              <th>Price</th>
-              <th>24h</th>
-              <th>Market Cap</th>
-            </tr>
-          </thead>
-          <tbody>
-            {coins.map((c) => {
-              const ch = c.price_change_percentage_24h;
-              const isPos = typeof ch === "number" && ch >= 0;
+            <div className="card" style={{ minHeight: 360 }}>
+              <div className="chartTitleRow">
+                <div className="chartTitle">Volume</div>
+                <div className="chartHint">24h liquidity</div>
+              </div>
 
-              return (
-                <tr key={c.id} onClick={() => onSelectCoin?.(c.id)}>
-                  <td style={{ fontWeight: 900 }}>
-                    {c.name}
-                    <span className="muted small" style={{ marginLeft: 6 }}>
-                      {String(c.symbol || "").toUpperCase()}
-                    </span>
-                  </td>
-                  <td>${Number(c.current_price).toLocaleString()}</td>
-                  <td className={isPos ? "pos" : "neg"}>
-                    {typeof ch === "number" ? ch.toFixed(2) : "—"}%
-                  </td>
-                  <td>${Number(c.market_cap).toLocaleString()}</td>
+              <div style={{ height: 300 }}>
+                <VolumeBarChart coins={coins} loading={loadingCoins} />
+              </div>
+            </div>
+          </div>
+
+          <div className="analyticsRow">
+            <MarketBreadth loading={loadingBreadth} range={range} breadth={breadth} />
+            <VolatilitySnapshot loading={loadingCoins} range={range} rows={volatilityRows} />
+          </div>
+
+          <div className="card">
+            <div className="chartTitleRow">
+              <div className="chartTitle">Top Coins</div>
+              <div className="chartHint">Click a row for details</div>
+            </div>
+
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Coin</th>
+                  <th>Price</th>
+                  <th>24h</th>
+                  <th>Market Cap</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {coins.map((c) => {
+                  const ch = c.price_change_percentage_24h;
+                  const isPos = typeof ch === "number" && ch >= 0;
+
+                  return (
+                    <tr key={c.id} onClick={() => onSelectCoin?.(c.id)}>
+                      <td style={{ fontWeight: 900 }}>
+                        {c.name}
+                        <span className="muted small" style={{ marginLeft: 6 }}>
+                          {String(c.symbol || "").toUpperCase()}
+                        </span>
+                      </td>
+                      <td>${Number(c.current_price).toLocaleString()}</td>
+                      <td className={isPos ? "pos" : "neg"}>
+                        {typeof ch === "number" ? ch.toFixed(2) : "—"}%
+                      </td>
+                      <td>${Number(c.market_cap).toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

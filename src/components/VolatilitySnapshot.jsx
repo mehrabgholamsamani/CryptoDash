@@ -4,13 +4,13 @@ function riskLevel(volPct) {
   return { label: "High", cls: "riskHigh" };
 }
 
-export default function VolatilitySnapshot({ loading, range, rows }) {
+export default function VolatilitySnapshot({ loading, range, rows, variant = "card" }) {
   if (loading) return <div className="skeleton skel-chart" style={{ height: 170 }} />;
 
   const max = Math.max(...rows.map((r) => r.volPct), 1);
 
   return (
-    <div className="card">
+    <div className={variant === "embedded" ? "mPanel" : "card"}>
       <div className="chartTitleRow">
         <div className="metricTitle">Volatility & Risk</div>
         <div className="metricSub">{range} • Std. dev of returns</div>

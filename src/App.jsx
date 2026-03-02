@@ -66,6 +66,7 @@ function writePref(key, value) {
 
 export default function App() {
   const [active, setActive] = useState("market");
+const [sidebarOpen, setSidebarOpen] = useState(false);
   const [coin, setCoin] = useState("bitcoin");
 
   // ✅ fake signup user
@@ -160,6 +161,8 @@ export default function App() {
   return (
     <div className="app">
       <Sidebar
+        mobileOpen={sidebarOpen}
+        setMobileOpen={setSidebarOpen}
         active={active}
         setActive={setActive}
         coin={coin}
@@ -171,6 +174,7 @@ export default function App() {
 
       <main>
         <div className="pageHeader">
+          <button className="mobileMenuBtn" type="button" aria-label="Open menu" title="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
           <div>
             <h1>{title}</h1>
             <p className="muted" style={{ margin: "6px 0 0" }}>

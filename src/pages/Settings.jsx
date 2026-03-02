@@ -23,7 +23,7 @@ export default function Settings({
   setCompact,
   reduceMotion,
   setReduceMotion,
-  onReset,
+  resetPrefs,
   user,
   onSignOut,
 }) {
@@ -196,7 +196,7 @@ export default function Settings({
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-          <button className="btnPrimary" onClick={onReset} type="button">
+          <button className="btnPrimary" onClick={resetPrefs} type="button">
             Reset preferences
           </button>
           <button

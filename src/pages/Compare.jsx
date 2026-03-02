@@ -137,10 +137,16 @@ function Skeleton({ h = 260 }) {
   return <div className="skeleton skel-chart" style={{ height: h }} />;
 }
 
-export default function Compare({ range = "7d" }) {
+export default function Compare({ range = "7d", watchlistApi }) {
   const days = RANGE_TO_DAYS[range] ?? 7;
 
-  const [watchIds, setWatchIds] = useState(() => readWatchlistIds());
+  const watchIds = useMemo(() => {
+    const raw = watchlistApi?.watchlist || [];
+    return Array.from(
+      new Set(raw.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim().toLowerCase()))
+    );
+  }, [watchlistApi?.watchlist]);
+
   const [selected, setSelected] = useState(() => readWatchlistIds().slice(0, 3));
 
   const [mode, setMode] = useState("pct"); // pct | price
@@ -158,19 +164,11 @@ export default function Compare({ range = "7d" }) {
   const abortRef = useRef(null);
 
   useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === WATCHLIST_KEY) {
-        const ids = readWatchlistIds();
-        setWatchIds(ids);
-        setSelected((prev) => {
-          const keep = prev.filter((id) => ids.includes(id));
-          return keep.length ? keep : ids.slice(0, 3);
-        });
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+    setSelected((prev) => {
+      const keep = prev.filter((id) => watchIds.includes(id));
+      return keep.length ? keep : watchIds.slice(0, 3);
+    });
+  }, [watchIds]);
 
   useEffect(() => {
     if (mode !== "price") setLogScale(false);
